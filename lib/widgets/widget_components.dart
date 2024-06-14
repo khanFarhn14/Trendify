@@ -83,7 +83,9 @@ class WidgetComponents{
   static void showSnackBarForFeedback({required BuildContext cntxt, required String message, required bool isError})
   {
     ScaffoldMessenger.of(cntxt).showSnackBar(
+
       SnackBar(
+        duration: const Duration(milliseconds: 800),
         behavior: SnackBarBehavior.floating,
         elevation: 0,
         margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
@@ -104,7 +106,6 @@ class WidgetComponents{
             ),
           ],
         ),
-        duration: const Duration(milliseconds: 800),
         action: SnackBarAction
         (
           label: "Ok",
