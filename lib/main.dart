@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:trendify/cache/cache_storage.dart';
-import 'package:trendify/providers/provider_products_list.dart';
 import 'package:trendify/resources.dart';
 import 'package:trendify/routes/routes.dart';
 import 'package:trendify/routes/routes_name.dart';
@@ -31,35 +29,30 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (context) => ProductList())
-      ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorSchemeSeed: ColorComponents.blackColor,
-          scaffoldBackgroundColor: ColorComponents.primaryColor,
-          textTheme: Theme.of(context).textTheme.apply(
-            bodyColor: ColorComponents.blackColor,
-          ),
-
-          elevatedButtonTheme: ElevatedButtonThemeData(
-            style: ElevatedButton.styleFrom(            
-              backgroundColor: ColorComponents.blackColor,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(50),
-              ),
-              shadowColor: ColorComponents.black40LightColor,
-            )
-          ),
-          bottomAppBarTheme: const BottomAppBarTheme(color: ColorComponents.primaryColor)        
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        colorSchemeSeed: ColorComponents.blackColor,
+        scaffoldBackgroundColor: ColorComponents.primaryColor,
+        textTheme: Theme.of(context).textTheme.apply(
+          bodyColor: ColorComponents.blackColor,
         ),
-        // home: const LoginPage(),
-        initialRoute: _isLoggedIn ? RouteName.home : RouteName.login,
-        onGenerateRoute: Routes.generateRoute,
+
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(            
+            backgroundColor: ColorComponents.blackColor,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(50),
+            ),
+            shadowColor: ColorComponents.black40LightColor,
+          )
+        ),
+        bottomAppBarTheme: const BottomAppBarTheme(color: ColorComponents.primaryColor)        
       ),
+      // home: const LoginPage(),
+      initialRoute: _isLoggedIn ? RouteName.home : RouteName.login,
+      onGenerateRoute: Routes.generateRoute,
     );
   }
 }
