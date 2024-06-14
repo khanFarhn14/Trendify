@@ -2,6 +2,7 @@ class ProductsUrl{
   static const String _baseUrl = 'https://fakestoreapi.com';
 
   static String allProductsUrl = '$_baseUrl/products';
+  static String specificProductsUrl = '$_baseUrl/products/';
 
   static String allCateogriesUrl = '$_baseUrl/products/categories';
 
@@ -9,6 +10,10 @@ class ProductsUrl{
 
   static String sortDescProductUrl = '$_baseUrl/products?sort=desc';
   static String sortAscProductUrl = '$_baseUrl/products?sort=asc';
+
+  static String cartItemsUrl = '$_baseUrl/carts/user/2';
+
+  static String deleteCartItem = '$_baseUrl/carts/';
 }
 
 class AuthUrl{
