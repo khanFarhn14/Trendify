@@ -1,10 +1,15 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
+import 'package:get/get.dart';
+import 'package:trendify/cache/cache_storage.dart';
 import 'package:trendify/pages/product_description_page.dart';
 import 'package:trendify/resources.dart';
+import 'package:trendify/routes/routes_name.dart';
 import 'package:trendify/services/repository/products_repository.dart';
+import 'package:trendify/state_management/reactive_products_list.dart';
+import 'package:trendify/state_management/reactive_user_cart.dart';
 import 'package:trendify/widgets/style_components.dart';
 import 'package:trendify/widgets/widget_components.dart';
 
@@ -18,19 +23,32 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   TextEditingController searchController = TextEditingController();
   ProductsRepository productsRepository = ProductsRepository();
+  final ReactiveProductList reactiveProductList = Get.put(ReactiveProductList());
+  final ReactiveUserCart reactiveUserCart = Get.put(ReactiveUserCart());
 
   @override
   void initState() {
     super.initState();
+    _fetchProducts();
   }
 
-  Future<dynamic> _fetchProducts() async {
-    return await productsRepository.getAllProducts();
+  Future<void> _fetchProducts() async {
+    await productsRepository.getAllProducts();
+  }
+
+  Future<void> _sortProducts() async {
+    await productsRepository.sortProducts();
+  }
+
+  Future<void> _getCategories() async {
+    await productsRepository.getCategory();
   }
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
+
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Column(
@@ -44,15 +62,45 @@ class _HomePageState extends State<HomePage> {
 
                 Row(
                   children: [
+
                     IconButton(
-                      onPressed: (){},
-                      icon: const ImageIcon(AssetImage(IconsResources.iconCart), size: 24,)
+                      onPressed: () => _fetchProducts(),
+                      icon: const Icon(Icons.filter_alt_off_outlined, size: 24,)
                     ),
+
+                    Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          // const ImageIcon(AssetImage(IconsResources.iconCart), size: 24,),
+                          IconButton(
+                            onPressed: (){
+                              Navigator.pushNamed(context, RouteName.checkout);
+                            },
+                            icon: const ImageIcon(AssetImage(IconsResources.iconCart), size: 24,)
+                          ),
+                          Positioned(
+                            top: 5,
+                            right: 5,
+                            child: Container(
+                              alignment: Alignment.center,
+                              width: 16,
+                              height: 16,
+                              decoration: BoxDecoration(
+                                color: ColorComponents.blackColor,
+                                borderRadius: BorderRadius.circular(50)
+                              ),
+                              child: Obx(() =>Text(reactiveUserCart.numberOfCartItems.toString(), style: FontStyleComponents.bodySmallBold.copyWith(color: ColorComponents.whiteColor),)),
+                            )
+                          )
+                        ],
+                      ),
+
+
                     MenuAnchor(
                       style: MenuStyle(
                         backgroundColor: MaterialStateProperty.all<Color>(const Color(0xff333333).withOpacity(0.8)),
                         padding: MaterialStateProperty.all<EdgeInsets>(const EdgeInsets.symmetric(horizontal: 12)),
-                        fixedSize: MaterialStateProperty.all<Size>(const Size.fromWidth(140))
+                        fixedSize: MaterialStateProperty.all<Size>(const Size.fromWidth(158))
 
                       ),
                       builder: (BuildContext context, MenuController controller, Widget? child){
@@ -72,7 +120,7 @@ class _HomePageState extends State<HomePage> {
                       menuChildren: [
                         InkWell(
                           onTap: (){
-                            _fetchProducts();
+                            _sortProducts();
                           },
                           child: Padding(
                             padding: const EdgeInsets.symmetric(vertical: 12),
@@ -89,15 +137,42 @@ class _HomePageState extends State<HomePage> {
 
                         const Divider(color: ColorComponents.white10DarkColor,),
 
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text("Sort", style: FontStyleComponents.body.copyWith(color: ColorComponents.primaryColor),),
-                              const SizedBox(width: 58,),
-                              const ImageIcon(AssetImage(IconsResources.iconSort), size: 20, color: ColorComponents.primaryColor,)
-                            ],
+                        InkWell(
+                          onTap: () {
+                            _getCategories();
+                            bottomSheet();
+
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text("Sort", style: FontStyleComponents.body.copyWith(color: ColorComponents.primaryColor),),
+                                const SizedBox(width: 58,),
+                                const ImageIcon(AssetImage(IconsResources.iconSort), size: 20, color: ColorComponents.primaryColor,)
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        const Divider(color: ColorComponents.white10DarkColor,),
+
+                        InkWell(
+                          onTap: () {
+                            LocalStorage.saveUserLoggedInStatus(false);
+                            Navigator.pushNamedAndRemoveUntil(context, RouteName.login, (route) => false);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text("Log Out", style: FontStyleComponents.body.copyWith(color: ColorComponents.primaryColor),),
+                                const SizedBox(width: 58,),
+                                const Icon(Icons.logout_outlined, size: 20, color: ColorComponents.primaryColor,)
+                              ],
+                            ),
                           ),
                         ),
                       ]
@@ -140,31 +215,60 @@ class _HomePageState extends State<HomePage> {
 
             WidgetComponents.height(height: 24),
 
-            FutureBuilder<dynamic>(
-              future: _fetchProducts(),
-              builder: (context, snapshot){
-                if(snapshot.hasData){
-                  return ProductsList(data: snapshot.data);
-                }else if(snapshot.hasError){
-                  return const Text("An error occurred while fetching");
-                }else{
-                  return WidgetComponents.loading(ColorComponents.blackColor);
-                }
-              },
+            Obx(
+              // ---------- Is Data Fetched ? ----------
+              ()=> reactiveProductList.isProductFetched.value ? 
+              // ---------- Is Response has Data ? ----------
+              reactiveProductList.isResponseHadData.value ?
+              ProductListComponent(data: reactiveProductList.productList) :
+              const Center(child: Text("An Exception occurred while fetching"),)
+              : 
+              Center(child: WidgetComponents.loading(ColorComponents.blackColor),),
 
             )
-
-
           ],
         ),
       ),
     );
   }
+
+  void bottomSheet(){
+    showModalBottomSheet(
+      backgroundColor: ColorComponents.whiteColor,
+
+      context: context,
+      builder: (context){
+        return Container(
+          height: 250,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(0)
+          ),
+          child: Obx(() => reactiveProductList.categories.isEmpty ? Center(child: WidgetComponents.loading(ColorComponents.blackColor)) :
+          
+          ListView.builder(
+            itemCount: reactiveProductList.categories.length,
+            itemBuilder: (context, index){
+              return ListTile(
+                title: Text(reactiveProductList.categories[index].toString().toUpperCase()),
+                trailing: const ImageIcon(AssetImage(IconsResources.iconArrow)),
+                onTap: () {
+                  productsRepository.getSpecificCategory(reactiveProductList.categories[index]);
+                  Navigator.pop(context);
+                },
+                // on
+              );
+            }
+          ),
+          ),
+        );
+      }
+    );
+  }
 }
 
-class ProductsList extends StatelessWidget {
+class ProductListComponent extends StatelessWidget {
   final List<dynamic> data;
-  const ProductsList({super.key, required this.data});
+  const ProductListComponent({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
@@ -227,6 +331,9 @@ class CardOfProducts extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    bool isLoading = false;
+    final ReactiveUserCart reactiveUserCart = Get.put(ReactiveUserCart());
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 10),
       color: ColorComponents.whiteColor,
@@ -273,20 +380,38 @@ class CardOfProducts extends StatelessWidget {
                   style: FontStyleComponents.body,
                 ),
             
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    
-                    backgroundColor: ColorComponents.whiteColor,
-                    padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(0),
-                      side: const BorderSide(
-                        color: ColorComponents.blackColor,
-                      )
-                    )
-                  ),
-                  onPressed: (){},
-                  child: Text('Add', style: FontStyleComponents.bodySmallBold.copyWith(color: ColorComponents.blackColor),)
+                StatefulBuilder(
+                  builder: (context, myStateFunc) {
+                    return ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ColorComponents.whiteColor,
+                        padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(0),
+                          side: const BorderSide(
+                            color: ColorComponents.blackColor,
+                          )
+                        )
+                      ),
+                      onPressed: ()async{
+                        myStateFunc((){
+                          isLoading = true;
+                        });
+
+                        await Future.delayed(const Duration(seconds: 1));
+
+
+                        myStateFunc((){
+                          isLoading = false;
+                        });
+
+                        reactiveUserCart.numberOfCartItems.value++;
+                        WidgetComponents.showSnackBarForFeedback(cntxt: context, message: "Added to cart", isError: false);
+                        
+                      },
+                      child: isLoading ? WidgetComponents.loading(ColorComponents.blackColor) : Text('Add', style: FontStyleComponents.bodySmallBold.copyWith(color: ColorComponents.blackColor),)
+                    );
+                  }
                 )
                 
               ],
