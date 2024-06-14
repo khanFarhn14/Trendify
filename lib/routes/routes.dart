@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trendify/pages/checkout_page.dart';
 import 'package:trendify/pages/home_page.dart';
 import 'package:trendify/pages/login_page.dart';
 import 'package:trendify/routes/routes_name.dart';
@@ -28,6 +29,9 @@ class Routes{
       
       case RouteName.home:
         return MaterialPageRoute(builder: (context) => const HomePage());
+
+      case RouteName.checkout:
+        return MaterialPageRoute(builder: (context) => const CheckoutPage());
 
       default: return MaterialPageRoute(
         builder: (context){
